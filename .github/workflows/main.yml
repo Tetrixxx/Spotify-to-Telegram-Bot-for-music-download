@@ -1,0 +1,44 @@
+name: Run Spotify Bot
+
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Needed to push changes
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Spotify Bot
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        API_HASH: ${{ secrets.API_HASH }}
+        BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
+        PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+        TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
+        HEADLESS: true
+      run: python spotify_auto_sender.py
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'GitHub Actions Bot'
+        git config --global user.email 'actions@github.com'
+        git add downloaded_tracks.txt
+        # Only commit if there are changes
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update downloaded tracks list"
+        git push

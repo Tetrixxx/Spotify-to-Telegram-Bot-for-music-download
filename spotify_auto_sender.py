@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from telethon import TelegramClient, sync
+from telethon.sessions import StringSession
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -45,6 +46,10 @@ def get_spotify_links():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--log-level=3")
     chrome_options.add_argument("window-size=1280,720")
+
+    if os.getenv('HEADLESS') == 'true':
+        chrome_options.add_argument("--headless=new")
+
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     
@@ -165,7 +170,15 @@ def main():
 
     new_tracks_found = False
 
-    with TelegramClient('my_session', API_ID, API_HASH) as client:
+    session_string = os.getenv('TELEGRAM_SESSION')
+    if session_string:
+        print("--- Környezeti változóban talált munkamenet használata ---")
+        session = StringSession(session_string)
+    else:
+        print("--- Helyi fájl munkamenet használata ---")
+        session = 'my_session'
+
+    with TelegramClient(session, API_ID, API_HASH) as client:
         
         # Először küldünk egy /start üzenetet a botnak
         print("--- /start üzenet küldése a botnak... ---")
